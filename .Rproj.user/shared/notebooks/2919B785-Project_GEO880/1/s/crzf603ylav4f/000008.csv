@@ -1,0 +1,2 @@
+"0",""
+"0","plot(x=tou_end$start_hour, y=tou_end$count, type = ""b"", pch = 19, col = ""green"", xlab = ""Start Hour"", ylab = ""Count"", main =""Tourist"")"

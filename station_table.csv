@@ -1,0 +1,287 @@
+Station_ID;Station_Name;Day of Go_live_date;Region ;Status
+3000;Virtual Station;07.07.2016;N/A;Active
+3005;7th & Flower;07.07.2016;DTLA;Active
+3006;Olive & 8th;07.07.2016;DTLA;Active
+3007;5th & Grand;07.07.2016;DTLA;Active
+3008;Figueroa & 9th;07.07.2016;DTLA;Active
+3010;11th & Maple;07.10.2016;DTLA;Active
+3011;Figueroa & Pico;07.12.2016;DTLA;Active
+3013;Anaheim & Avalon;7/31/2017;Port of LA;Inactive
+3014;Union Station West Portal;07.07.2016;DTLA;Active
+3016;Los Angeles & Temple;07.07.2016;DTLA;Active
+3018;Grand & Olympic;07.07.2016;DTLA;Active
+3019;12th & Hill;07.07.2016;DTLA;Active
+3020;Hill & Washington;07.07.2016;DTLA;Active
+3021;3rd & Rose;07.07.2016;DTLA;Inactive
+3022;3rd & Santa Fe;07.07.2016;DTLA;Active
+3023;1st & Judge John Aiso;07.07.2016;DTLA;Active
+3024;Hope & 1st;7/13/2016;DTLA;Active
+3025;Grand & Washington;07.07.2016;DTLA;Active
+3026;Figueroa & Cesar Chavez;07.07.2016;DTLA;Active
+3027;Spring & 3rd;07.07.2016;DTLA;Active
+3028;Grand & Temple;07.07.2016;DTLA;Active
+3029;Main & 4th;07.07.2016;DTLA;Active
+3030;Main & 1st;07.07.2016;DTLA;Active
+3031;7th & Spring;07.07.2016;DTLA;Active
+3032;Hope & 6th;07.07.2016;DTLA;Active
+3033;Main & 9th;07.07.2016;DTLA;Active
+3034;Hope & 11th;07.07.2016;DTLA;Active
+3035;Figueroa & 8th;07.07.2016;DTLA;Active
+3036;Willow St & Mateo St;07.07.2016;DTLA;Active
+3037;Imperial & 7th;07.07.2016;DTLA;Active
+3038;Main & 5th;07.07.2016;DTLA;Inactive
+3040;Wilshire & Witmer;07.07.2016;DTLA;Active
+3042;1st & Central;07.07.2016;DTLA;Active
+3045;18th & San Pedro;07.07.2016;DTLA;Active
+3046;2nd & Hill;07.12.2016;DTLA;Active
+3047;Pico & Flower;07.07.2016;DTLA;Active
+3048;5th & Hewitt;7/13/2016;DTLA;Active
+3049;2nd & Figueroa;07.07.2016;DTLA;Active
+3051;7th & Broadway;07.07.2016;DTLA;Active
+3052;7th & Bixel;07.07.2016;DTLA;Active
+3054;Factory Place & Alameda;07.07.2016;DTLA;Active
+3055;7th & Main;07.07.2016;DTLA;Inactive
+3056;Grand & 14th;07.07.2016;DTLA;Active
+3057;18th & Figueroa;07.07.2016;DTLA;Active
+3058;Industrial St & Mateo St;07.07.2016;DTLA;Active
+3059;11th & Santee;07.07.2016;DTLA;Inactive
+3060;Pico & Maple;07.07.2016;DTLA;Inactive
+3062;3rd & San Pedro;07.07.2016;DTLA;Active
+3063;Olive & 5th;07.07.2016;DTLA;Active
+3064;Grand & 7th;07.11.2016;DTLA;Active
+3065;New High & Ord;07.07.2016;DTLA;Active
+3066;Spring & College;07.07.2016;DTLA;Active
+3067;Main & 6th;07.07.2016;DTLA;Active
+3068;Grand & 3rd;07.07.2016;DTLA;Active
+3069;Broadway & 3rd;07.07.2016;DTLA;Active
+3074;Hope & Olympic;07.07.2016;DTLA;Active
+3075;Broadway & 9th;07.07.2016;DTLA;Active
+3076;9th & Los Angeles;07.07.2016;DTLA;Active
+3077;8th & Wall;07.07.2016;DTLA;Active
+3078;Hill & College;07.07.2016;DTLA;Active
+3079;Temple & Vignes;07.07.2016;DTLA;Active
+3080;San Julian & 12th;07.07.2016;DTLA;Inactive
+3081;Stanford & 12th;7/13/2016;DTLA;Active
+3082;Traction & Rose;8/29/2016;DTLA;Active
+4125;Banning's Landing;7/31/2017;Port of LA;Inactive
+4126;Cabrillo Beach;7/31/2017;Port of LA;Inactive
+4127;Catalina Express;7/31/2017;Port of LA;Inactive
+4129;Crafted 22nd St Park;7/31/2017;Port of LA;Inactive
+4130;DoubleTree Hotel;7/31/2017;Port of LA;Inactive
+4131;Downtown Harbor;7/31/2017;Port of LA;Inactive
+4132;Fanfare Fountain;7/31/2017;Port of LA;Inactive
+4133;Ports O'Call;7/31/2017;Port of LA;Inactive
+4134;USS IOWA;7/31/2017;Port of LA;Inactive
+4135;Waterfront Park (East);7/31/2017;Port of LA;Inactive
+4136;Waterfront Park (West);7/31/2017;Port of LA;Inactive
+4138;Old Pasadena;7/14/2017;Pasadena;Inactive
+4142;Pasadena Convention Center;7/14/2017;Pasadena;Inactive
+4144;Cordova & Lake;7/14/2017;Pasadena;Inactive
+4146;City Hall West;7/14/2017;Pasadena;Inactive
+4147;Fair Oaks & Mercantile Alley;7/14/2017;Pasadena;Inactive
+4148;Pasadena Central Library;7/14/2017;Pasadena;Inactive
+4149;Arroyo Parkway & Bellevue;7/14/2017;Pasadena;Inactive
+4150;Villa Parke;7/14/2017;Pasadena;Inactive
+4151;Los Robles & Cordova;7/14/2017;Pasadena;Inactive
+4152;Pasadena Museum;7/14/2017;Pasadena;Inactive
+4153;Rose Bowl;7/14/2017;Pasadena;Inactive
+4154;Fair Oaks & Peoria;7/14/2017;Pasadena;Inactive
+4155;Lake & Union;7/14/2017;Pasadena;Inactive
+4156;Madison & Walnut;7/14/2017;Pasadena;Inactive
+4157;Lake & Del Mar;7/14/2017;Pasadena;Inactive
+4158;Lake & California;7/14/2017;Pasadena;Inactive
+4159;Pasadena City College;7/14/2017;Pasadena;Inactive
+4160;Fillmore Station;7/14/2017;Pasadena;Inactive
+4162;Memorial Park Station;7/14/2017;Pasadena;Inactive
+4163;Lake & Locust;7/14/2017;Pasadena;Inactive
+4164;Allen Station;7/14/2017;Pasadena;Inactive
+4165;Del Mar Station;7/14/2017;Pasadena;Inactive
+4166;Colorado & Hill;7/14/2017;Pasadena;Inactive
+4167;Pasadena & Dayton;7/14/2017;Pasadena;Inactive
+4169;Oakland & Union;7/14/2017;Pasadena;Inactive
+4170;Lake & Merrett;7/14/2017;Pasadena;Inactive
+4174;Fair Oaks & Hammond;7/14/2017;Pasadena;Inactive
+4176;Caltech East;7/14/2017;Pasadena;Inactive
+4177;Madison & Colorado;7/14/2017;Pasadena;Inactive
+4180;Caltech West;7/21/2017;Pasadena;Inactive
+4181;Oak Knoll & Colorado;7/14/2017;Pasadena;Inactive
+4183;Catalina & Colorado;7/14/2017;Pasadena;Inactive
+4194;Union Station East;7/25/2017;DTLA;Inactive
+4202;Abbot Kinney & Cadiz;07.07.2017;Westside;Inactive
+4204;Washington & Abbot Kinney;07.07.2017;Westside;Inactive
+4205;Venice & Lincoln;07.07.2017;Westside;Inactive
+4206;California & Lincoln;07.07.2017;Westside;Inactive
+4207;Rose & 7th;07.07.2017;Westside;Inactive
+4208;Rose & Rennie;07.07.2017;Westside;Inactive
+4209;Rose & Main;07.07.2017;Westside;Inactive
+4210;Ocean Front Walk & North Venice;07.07.2017;Westside;Inactive
+4211;Pacific & North Venice;07.07.2017;Westside;Inactive
+4212;Windward & Main;07.07.2017;Westside;Inactive
+4213;7th & Westminster;07.07.2017;Westside;Inactive
+4214;Ocean Front Walk & Navy;07.07.2017;Westside;Inactive
+4215;Downtown Santa Monica Expo Line Station;07.07.2017;Westside;Inactive
+4216;17th St / SMC Expo Line Station;07.07.2017;Westside;Inactive
+4217;Venice & Abbot Kinney;07.07.2017;Westside;Inactive
+4220;Park & Echo Park;9/28/2017;DTLA;Active
+4227;Grand / LATTC;12/15/2017;DTLA;Active
+4244;Expo Park/USC Station;6/28/2018;DTLA;Inactive
+4245;University & Hoover;07.08.2018;DTLA;Active
+4246;32nd & Figueroa;07.03.2018;DTLA;Active
+4247;25th & Vermont;5/29/2019;DTLA;Active
+4248;29th & Ellendale;07.02.2018;DTLA;Active
+4249;Figueroa & McCarthy Way;6/29/2018;DTLA;Active
+4250;Severance & Adams;07.09.2018;DTLA;Active
+4254;Hoover & 29th;6/28/2018;DTLA;Active
+4266;28th & Figueroa;11/29/2018;DTLA;Active
+4267;28th & University;8/23/2018;DTLA;Active
+4273;Hoover & 32nd;10.08.2018;DTLA;Active
+4275;Expo Park/LAFC;12/18/2018;DTLA;Active
+4276;Mariachi Plaza;12.02.2018;DTLA;Inactive
+4285;Metro Bike Share Free Bikes;2/27/2019;Free Bikes;Active
+4286;Metro Bike Share Out of Service Area Smart Bike;2/27/2019;Free Bikes;Active
+4293;Westlake & 3rd;1/25/2019;DTLA;Active
+4300;Union & Olympic;1/24/2019;DTLA;Active
+4301;Maubert & Vermont;6/18/2019;DTLA;Active
+4302;Vermont Pl & Vermont;6/19/2019;DTLA;Active
+4303;Sunset & Virgil;6/18/2019;DTLA;Active
+4304;Shatto Pl & Wilshire;1/28/2019;DTLA;Active
+4306;8th & Vermont;1/29/2019;DTLA;Active
+4311;7th & Berendo;02.07.2019;DTLA;Active
+4312;4th & Vermont;02.07.2019;DTLA;Active
+4313;Westlake/Macarthur Park Station;02.06.2019;DTLA;Active
+4314;7th & Park View;02.08.2019;DTLA;Active
+4315;Union & 7th;02.06.2019;DTLA;Active
+4322;Venice & Inglewood;2/27/2019;Westside;Active
+4323;Venice & Beethoven;2/27/2019;Westside;Active
+4324;Palms & Motor;2/27/2019;Westside;Active
+4325;Venice & Clarington;2/27/2019;Westside;Active
+4328;Sepulveda & Palms;2/27/2019;Westside;Active
+4329;Palms & National;2/27/2019;Westside;Active
+4330;Bagley & Venice;2/27/2019;Westside;Active
+4331;Venice & Colonial;2/27/2019;Westside;Active
+4332;National & Motor;2/27/2019;Westside;Active
+4333;Venice & Walgrove;2/27/2019;Westside;Active
+4334;Venice & Motor;2/27/2019;Westside;Active
+4335;Venice & Hughes;2/27/2019;Westside;Active
+4336;Barrington & National;2/28/2019;Westside;Active
+4337;Inglewood & Braddock;5/22/2019;Westside;Active
+4338;Sepulveda & Venice;07.02.2019;Westside;Active
+4339;Westwood & National;3/21/2019;Westside;Inactive
+4340;17th St / SMC Expo Line Station;2/27/2019;Westside;Active
+4341;7th & Westminster;2/27/2019;Westside;Active
+4342;Abbot Kinney & Cadiz;2/27/2019;Westside;Active
+4343;California & Lincoln;2/27/2019;Westside;Active
+4344;Downtown Santa Monica Expo Line Station;2/27/2019;Westside;Active
+4345;Ocean Front Walk & Navy;2/27/2019;Westside;Active
+4346;Ocean Front Walk & North Venice;2/27/2019;Westside;Active
+4347;Pacific & North Venice;2/27/2019;Westside;Active
+4348;Rose & 7th;2/27/2019;Westside;Active
+4349;Rose & Main;2/27/2019;Westside;Active
+4350;Rose & Rennie;2/27/2019;Westside;Active
+4351;Venice & Lincoln;2/27/2019;Westside;Active
+4352;Washington & Abbot Kinney;2/27/2019;Westside;Active
+4353;Windward & Main;2/27/2019;Westside;Active
+4354;Venice & Glendon;2/27/2019;Westside;Active
+4356;CicLAvia Downtown Culver City Hub;03.01.2019;Westside;Inactive
+4357;CicLAvia Palms Hub;03.01.2019;Westside;Inactive
+4369;Pop-up Station at CicLAvia Culver City Hub;03.01.2019;Westside;Inactive
+4372;Public Bike Rack: Culver City Expo Line;3/19/2019;Westside;Active
+4373;_ReUse Westside Only_01;3/19/2019;Westside;Inactive
+4374;_ReUse Westside Only_02;3/19/2019;Westside;Inactive
+4378;Palms & Kelton;3/21/2019;Westside;Active
+4379;Sepulveda & Charnock;3/20/2019;Westside;Active
+4380;Centinela & Lucile;3/20/2019;Westside;Active
+4381;Sepulveda & Lucerne;3/20/2019;Westside;Active
+4382;Westwood & National;3/20/2019;Westside;Active
+4383;McLaughlin & Venice;4/29/2019;Westside;Active
+4384;Inglewood & Ballona;07.02.2019;Westside;Active
+4385;Public Bike Rack: Westwood/Rancho Park Expo Line;3/19/2019;Westside;Active
+4387;Row DTLA;04.01.2019;DTLA;Active
+4389;Expo/Sepulveda Expo Line Station;05.06.2019;Westside;Active
+4390;Kenmore & 3rd;05.09.2019;DTLA;Active
+4393;Durango & Venice;07.03.2019;Westside;Active
+4394;Westlawn & Beatrice;07.03.2019;Westside;Active
+4395;Del Rey Day Pop-up;9/15/2019;Westside;Inactive
+4396;Sepulveda & National;5/22/2019;Westside;Active
+4397;Mar Vista Rec Center;5/17/2019;Westside;Active
+4400;Newton & Central;06.11.2019;DTLA;Active
+4401;Vermont & Beverly;5/31/2019;DTLA;Active
+4402;Pop Hollywood Ciclavia Walk of Fame Hub;8/18/2019;DTLA;Inactive
+4403;Ciclavia Watts Hub;2/23/2020;DTLA;Inactive
+4404;Albany & Olympic;06.04.2019;DTLA;Active
+4405;Berendo & Olympic;6/25/2019;DTLA;Active
+4406;Normandie & Hollywood;8/15/2019;DTLA;Active
+4407;Pop Hollywood Ciclavia Barnsdall Art Park Hub;8/18/2019;DTLA;Inactive
+4408;Venice & Sawtelle;06.05.2019;Westside;Active
+4409;Maxella & Del Ray;06.05.2019;Westside;Active
+4410;Kenmore & 6th;06.04.2019;DTLA;Active
+4413;Lankershim & Vineland;08.05.2019;North Hollywood;Active
+4414;Chandler & Colfax;08.05.2019;North Hollywood;Active
+4415;Chandler & Laurel Canyon;08.05.2019;North Hollywood;Active
+4416;Riverside & Colfax;08.05.2019;North Hollywood;Active
+4417;Magnolia & Cartwright;08.05.2019;North Hollywood;Active
+4418;Lankershim & Moorpark;08.05.2019;North Hollywood;Active
+4419;Magnolia & Clybourn;08.05.2019;North Hollywood;Active
+4420;North Hollywood Station;08.05.2019;North Hollywood;Active
+4422;Riverside & Cahuenga;08.05.2019;North Hollywood;Active
+4425;Mariota & Riverside;08.05.2019;North Hollywood;Active
+4426;Tujunga & Moorpark;08.05.2019;North Hollywood;Active
+4427;Vineland & Otsego;08.05.2019;North Hollywood;Active
+4428;Lankershim & Hesby;08.05.2019;North Hollywood;Active
+4429;Chandler & Cahuenga;08.05.2019;North Hollywood;Active
+4430;Vineland & Burbank;08.05.2019;North Hollywood;Active
+4431;Lankershim & Califa;08.05.2019;North Hollywood;Active
+4432;Public Bike Rack: Universal City/Studio City Red Line Station;8/23/2019;North Hollywood;Active
+4435;Centre & 6th;8/28/2019;Port of LA;Inactive
+4436;Vermont & Franklin;09.04.2019;DTLA;Active
+4437;Franklin & Hillhurst;09.04.2019;DTLA;Active
+4438;Hoover & Fountain;09.05.2019;DTLA;Active
+4439;Santa Monica & Virgil;12/13/2019;DTLA;Active
+4440;Wilshire & Alexandria;09.11.2019;DTLA;Active
+4441;University & 30th;09.11.2019;DTLA;Active
+4442;Normandie & Sunset;09.12.2019;DTLA;Active
+4443;Flower & Jefferson;09.12.2019;DTLA;Active
+4444;Wilshire & Hobart;9/26/2019;DTLA;Active
+4445;Sunset & Douglas;9/18/2019;DTLA;Active
+4446;James M. Wood & Alvarado;10.02.2019;DTLA;Active
+4447;Rampart & Wilshire;10.02.2019;DTLA;Active
+4448;23rd St & Flower;10.03.2019;DTLA;Active
+4449;12th & Valencia;9/25/2019;DTLA;Active
+4450;Virgil & 6th;11/13/2019;DTLA;Active
+4451;Melbourne & Vermont;10.09.2019;DTLA;Active
+4452;Hillhurst & Kingswell;10.09.2019;DTLA;Active
+4453;Lucile & Hoover;9/25/2019;DTLA;Active
+4454;Vermont & Exposition;11.07.2019;DTLA;Active
+4455;Rowena & Hyperion;11.12.2019;DTLA;Active
+4456;Ardmore & Olympic;11.06.2019;DTLA;Active
+4457;Hollywood & Rodney;11.06.2019;DTLA;Active
+4458;Culver & Centinela;10/15/2019;Westside;Active
+4459;Culver & McConnell;10/15/2019;Westside;Active
+4460;Culver & Inglewood;10/17/2019;Westside;Active
+4461;Rose & Overland;10/17/2019;Westside;Active
+4462;Overland & Charnock;10/18/2019;Westside;Active
+4463;Tujunga & Hatteras;10/16/2019;North Hollywood;Active
+4469;Playa Vista Library;11.05.2019;Westside;Active
+4470;McConnell & Runway;11.05.2019;Westside;Active
+4472;Santa Monica & Sunset;11/21/2019;DTLA;Active
+4473;Vendome & Beverly;11/26/2019;DTLA;Active
+4474;Ambrose & Hillhurst;1/15/2020;DTLA;Active
+4475;San Pedro & Winston;1/15/2020;DTLA;Active
+4476;Sunset & Silver Lake;2/19/2020;DTLA;Active
+4478;Tracy & Hyperion;01.08.2020;DTLA;Active
+4479;Ellendale Pl & Adams;01.09.2020;DTLA;Active
+4480;Figueroa Plaza;11.07.2019;DTLA;Active
+4482;Wilcox & Fountain;11.12.2019;DTLA;Active
+4483;Glendale & Silver Lake;11/21/2019;DTLA;Active
+4484;Campus Center Drive;11/19/2019;Westside;Active
+4490;Figueroa & 4th;12.11.2019;DTLA;Active
+4491;Main & Winston;12.11.2019;DTLA;Active
+4493;Sunset Triangle Plaza;12/18/2019;DTLA;Active
+4494;Laveta Terrace & Sunset;01.08.2020;DTLA;Active
+4496;Concert Park;2/27/2020;Westside;Active
+4499;Victory & Colfax;03.05.2020;North Hollywood;Active
+4500;Burbank & Cahuenga;03.05.2020;North Hollywood;Active
+4503;Stanford & Washington;2/27/2020;Westside;Active
+4504;Vista Del Mar & Culver;2/18/2020;Westside;Active
+4505;Glen Alla Park;2/13/2020;Westside;Active
+4508;Ciclavia South Central Hub;2/23/2020;DTLA;Inactive

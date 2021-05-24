@@ -1,0 +1,36 @@
+"0","scootertrips <- read.csv(""e-scooter-trips-2019.csv"", sep = "","")
+
+# get rid of trips without coordinates and columns we don't need
+scootertrips <- scootertrips[!is.na(scootertrips$Start.Centroid.Latitude),]
+scootertrips <- scootertrips[!is.na(scootertrips$End.Centroid.Latitude),]
+scootertrips <- scootertrips %>% 
+  mutate(duration = Trip.Duration/60) %>% #to minutes
+  mutate(distance = Trip.Distance/1000) %>%
+  mutate(starttime=as.POSIXct(Start.Time, format=""%m/%d/%Y %I:%M:%OS %p"")) %>%
+  mutate(start_hour = as.POSIXlt(starttime)$hour) %>%
+  mutate(start_day=floor_date(starttime, unit=""day"")) %>% 
+  mutate(start_month=floor_date(starttime, unit=""month"")) %>% 
+  mutate(speed=distance/(duration/60)) %>%
+  filter(duration < 12.0, duration > 15/60/60, distance > 0.1, distance < 25.0, speed < 20.0)
+scootertrips <- subset(scootertrips, select = -c(Accuracy, End.Time, Start.Time, Trip.Duration, Trip.Distance, Start.Census.Tract, End.Census.Tract, Start.Centroid.Location, End.Centroid.Location), )
+scooter_start_sf <- scootertrips %>%  
+  st_as_sf(coords=c(""Start.Centroid.Longitude"", ""Start.Centroid.Latitude""), crs=WGS84)
+#scooter_end_sf <- scootertrips %>%  
+  #st_as_sf(coords=c(""End.Centroid.Longitude"", ""End.Centroid.Latitude""), crs=WGS84)
+
+hourly_start <- scootertrips %>% count(start_hour, Start.Community.Area.Name)
+hourly_end <- scootertrips %>% count(start_hour, End.Community.Area.Name)
+hourly_distance <- scootertrips %>% filter(Start.Community.Area.Name == ""WEST TOWN"") %>% group_by(start_hour, End.Community.Area.Name) %>% mean(distance)
+"
+"2","argument is not numeric or logical: returning NA"
+"0","hourly_west_town <- scootertrips %>% filter(Start.Community.Area.Name == ""WEST TOWN"" & !End.Community.Area.Name %in% c(""LOGAN SQUARE"", ""WEST TOWN"", ""NEAR WEST SIDE"")) %>% count(start_hour, End.Community.Area.Name)"
+"0",""
+"0",""
+"0","ggplot(data = hourly_start, mapping = aes(x = start_hour,"
+"0","                                          y = Start.Community.Area.Name,"
+"0","                                        fill = n)) +"
+"0","                                       geom_tile() +"
+"0","                                       xlab(label = ""Hour"") +"
+"0","                                       ylab(label = ""Start Community"") +"
+"0","                                       scale_fill_continuous(""Count"") + "
+"0","                                       ggtitle(""Number of rides from different communities"")"

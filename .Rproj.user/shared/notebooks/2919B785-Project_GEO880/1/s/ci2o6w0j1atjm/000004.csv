@@ -1,0 +1,1 @@
+"0","boxplot(biketrips_a$velocity ~ biketrips_a$bike_type, col=""grey"", main = ""Velocity"", xlab = ""Bike Type"", ylab = ""Velocity [km/h]"")"

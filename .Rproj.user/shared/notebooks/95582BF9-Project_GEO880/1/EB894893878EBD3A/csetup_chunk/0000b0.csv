@@ -1,0 +1,4 @@
+"0",""
+"0","ggplot(data = scootertrips, aes(duration)) +"
+"0","  geom_histogram() +"
+"0","  xlab(""Duration [min]"")"

@@ -1,0 +1,8 @@
+"0","## a lot of trips between Union station and Main/1st St (location of Los Angeles Department of Transportation)"
+"0","ggplot(data = hourly, mapping = aes(x = Hour,"
+"0","                                       y = Station_Name,"
+"0","                                       fill = diff)) +"
+"0","                                       geom_tile() +"
+"0","                                       xlab(label = ""Hour"") +"
+"0","                                       ylab(label = ""Start Station"") +"
+"0","                                       scale_fill_gradient2(""Difference"")"

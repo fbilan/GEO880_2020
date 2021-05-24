@@ -1,0 +1,796 @@
+---
+title: "Spatial and Temporal Patterns of “Metro Bike Share” Trips in Downtown Los Angeles"
+subtitle: "Project for GEO880, Patterns and Trends in Environmental Data - Computational Movement Analysis"
+author: "Fabian Biland & Laura Wysling"
+output: 
+  html_document:
+    code_folding: hide
+    fig_caption: yes
+    highlight: tango
+    number_sections: no
+    theme: journal
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+---
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE}
+### Preliminaries ###
+pkgTest <- function(x)
+  {
+    if (!require(x,character.only = TRUE))
+    {
+      install.packages(x,dep=TRUE)
+        if(!require(x,character.only = TRUE)) stop("Package not found")
+    }
+}
+pkgTest("dplyr")
+pkgTest("lubridate")
+pkgTest("ggplot2")
+pkgTest("raster")
+pkgTest("sf")
+pkgTest("sp")
+pkgTest("leaflet")
+pkgTest("tidyverse")
+pkgTest("geosphere")
+pkgTest("rgeos")
+pkgTest("spatstat")
+pkgTest("maptools")
+
+WGS84 <- "+init=epsg:4326"
+NAD83 <- "+init=epsg:6423"
+
+knitr::opts_chunk$set(echo = TRUE)
+options(warning=FALSE)    # Don't show warnings
+par(mfrow=c(1,1))         # Reset plot placement to normal 1 by 1
+```
+
+# Background and Research goals  
+Bike-sharing systems are gaining popularity around the world. Bike-sharing is a fast-growing and flexible mode of transportation that is changing attitudes to cycling and sharing transportation infrastructure in cities (Caulfield et al., 2017). This mobility option is rather new and allows improvement of first mile / last mile connection to other modes of transport (bus, metro etc.), increases bicycle usage in urban environments and reduces environmental impacts of our transport activities. The introduction of bike-sharing systems has started in Europe and soon expanded to other continents. The understanding of patterns in bike-sharing trips can provide insight to the research of multi-modal transportation systems and can therefore guide policy decisions for sustainable transport development (Kou & Cai, 2018).
+
+Los Angeles is strongly associated with cars. The city has a modal split of around 1% for bicycles and a bit over 5% for public transport (Deloitte MCS Limited, 2018). The default mode of transport in the city is, without a doubt, the car. This is part of the reason why we have decided to work with data of bike trips in this particular city. Using data from the Metro Bike Share program, we evaluated spatial and temporal patterns of bike trips in Los Angeles. The project aims to explore the following research question: Describe spatial and temporal patterns of Metro Bike Share trips in Los Angeles. To explore this question, we focused on four different aspects:
+
+* Determine where imbalances of the distribution of bicycles might occur and find the most "popular" bike stations of the system
+
+* The ability of the system to improve multi-modal transportation - an analysis of metro stations and bike-sharing stations
+
+* Patterns of different weekdays and differences in trips between weekend and weekdays
+
+* How do people use the bicycles - a trip pattern analysis for two different purposes of bike usage including a temporal analysis
+
+
+
+# Data & Methods  
+
+## Data set  
+Metro Bike Share publishes anonymized trip data on their website (Metro Bike Share, 2019). Data sets are available for each quarter of a year since the start of the project in 2016. We have used the bike trip data of the third quarter of the year 2019 (June - September). This .cvs data set contains 86’590 trips with the following attributes:
+
+* **trip_id**: Locally unique integer that identifies the trip
+* **duration**: Rounded to minutes
+* **start_time / end_time**
+* **start_station / end sation**: Station ID 
+* **start_lat / start_lon**: Origin location of the trip (coordinates)
+* **end_lat / end_lon**: Terminal location of the trip (coordinates)
+* **trip_route_category**: "Round Trip" for trips starting and ending at the same station or "One Way" for all other trips
+* **passholder_type**: The name of the passholder's plan
+* **bike_type**: The kind of bike used on the trip, including standard pedal-powered bikes, electric assist bikes, or smart bikes
+
+These are only the attributes that we have used for the project. A full list of all attributes can be accessed on https://bikeshare.metro.net/about/data/.  Furthermore, metro station data from the developer site of Metro Los Angeles has been used for this project (Metro Bus and Rail GIS Data Developer, 2020). 
+
+## Pre-Processing  
+The Metro Bike Share data set needed some additional pre-processing. Trips below 1 minute have been removed and long trips have been capped at 24 hours by Metro Bike Share. We have decided to remove trips below 3 minutes and above 1430 minutes (23 hours 50 minutes) since they can be assumed to be bikes that were returned before usage (e.g. due to damage) or unreturned bikes respectively. Additionally, we have removed trips that did not contain coordinates.
+
+As shown in Figure 1, the bike stations are clustered in four areas of the city with the following centers of the clusters: Downtown Los Angeles, Santa Monica, Long Beach and Valley Village. With the exception of only 3 trips in the data set, all trips take place within a cluster (have the same start and end cluster). The clusters were defined by filtering the stations by their coordinates. A different approach by using a well known clustering method, such as DBSCAN could also have been used. But because the clusters are very clear, the filtering approach does not lead to a different result.  
+
+We have then adjusted data types in the data set for further usage and extracted information such as "start_day” or “end_hour” and others for a better overall view from the timestamps. After transforming the data to the NAD83 coordinate system, we calculated the trip distance by using pythagoras between the start and end stations. Afterwards, we could calculate the (average) velocity for each trip by using the distance and the trip duration. The values were added to the data set and are shown in Figure 2 (distance and duration).  
+
+We have decided to focus on the Downtown Los Angeles area (see Figure 1). This cluster includes the majority of trips (83%) and stations (57%). The table below shows absolute numbers. The average trip duration is 20.5 minutes and the average trip distance is 1.3 kilometers (linear distance excluding round trips where the distance is zero). The monthly pass is the most common passholder type with 72%. 18% of trips are of the type “Walk-up” and only 10% of the trips can be ascribed to other passholder types (annual, one day, and flex pass).  
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE}
+### Load Data ###
+all_stations <- st_read(file.path("Metro/All/Stations_all_0715.shp"), quiet = TRUE)
+all_stations <- st_as_sf(all_stations, coords = c("LONG", "LAT"), crs = WGS84)
+all_stations_sp <- all_stations %>% 
+  st_transform(crs = NAD83) %>%
+  as("Spatial")
+
+all_stations <- st_transform(all_stations, crs = WGS84)
+
+biketrips <- read.csv("bike-trips-LA-q3.csv", sep = ",")
+station_dic <- read.csv("station_table.csv", sep = ";")
+station_dic <- station_dic[,1:2] %>% 
+  mutate(Station_ID = as.character(Station_ID))
+
+### Clear Data ###
+
+# get rid of trips without coordinates and columns we don't need
+biketrips <- biketrips[!is.na(biketrips$start_lat),]
+biketrips <- biketrips[!is.na(biketrips$end_lat),]
+
+# assign character for each cluster depending on coordinates
+biketrips <- biketrips %>% 
+  mutate(cluster_start = ifelse(start_lat > 34.1364, "B", ifelse(start_lat < 33.8945, "C", ifelse(start_lon > -118.35, "A", "D"))))
+
+biketrips <- biketrips %>% 
+  mutate(cluster_end = ifelse(end_lat > 34.1364, "B", ifelse(end_lat < 33.8945, "C", ifelse(end_lon > -118.35, "A", "D"))))
+
+## are start and end region the same? yes, only for 3 trips they are different -> focus on cluster a
+biketrips <- biketrips %>% 
+  mutate(within = ifelse(cluster_start == cluster_end, TRUE, FALSE))
+
+# add hour, day, month and time to data set and adjust data types
+biketrips <- biketrips %>% 
+  mutate(start_time=as.POSIXct(start_time, format="%m/%d/%Y %H:%M")) %>%
+  mutate(start_hour = as.POSIXlt(start_time)$hour) %>%
+  mutate(start_day=floor_date(start_time, unit="day")) %>% 
+  mutate(start_month=floor_date(start_time, unit="month")) %>% 
+  mutate(end_time=as.POSIXct(end_time, format="%m/%d/%Y %H:%M")) %>%
+  mutate(end_hour = as.POSIXlt(end_time)$hour) %>%
+  mutate(end_day=floor_date(end_time, unit="day")) %>% 
+  mutate(end_month=floor_date(end_time, unit="month")) %>%
+  mutate(start_station = as.character(start_station)) %>%
+  mutate(end_station = as.character(end_station)) %>%
+  mutate(start_lon = as.numeric(start_lon)) %>%
+  mutate(start_lat = as.numeric(start_lat)) %>%
+  mutate(end_lon = as.numeric(end_lon)) %>%
+  mutate(end_lat = as.numeric(end_lat))
+
+# calculate distance and velocity (convert to NAD83 and use pythagoras) and bind it to biketrips
+biketrips_duration <- biketrips %>% 
+  group_by(duration) %>%
+  summarize(count=n())
+
+biketrips <- biketrips %>% 
+  filter(duration > 0, duration < 1430)
+
+biketrips_start <- biketrips[c("start_lon", "start_lat")] %>% 
+  st_as_sf(coords = c("start_lon", "start_lat"), crs = WGS84) %>%
+  st_transform(crs = NAD83)
+
+biketrips_end <- biketrips[c("end_lon", "end_lat")] %>% 
+  st_as_sf(coords = c("end_lon", "end_lat"), crs = WGS84) %>% 
+  st_transform(crs = NAD83)
+
+biketrips_dist <- st_coordinates(biketrips_start) %>% 
+  cbind(st_coordinates(biketrips_end))
+
+colnames(biketrips_dist) <- c("x1", "y1", "x2", "y2")
+biketrips_dist <- as.data.frame(biketrips_dist) %>% 
+  mutate(distance = sqrt((x1-x2)**2 + (y1-y2)**2)/1000)
+biketrips <- biketrips %>% 
+  cbind(distance = biketrips_dist$distance) %>% 
+  mutate(velocity = distance / duration*60)
+
+# create sf object
+bike_start_sf <- biketrips %>% 
+  st_as_sf(coords = c("start_lon", "start_lat"), crs = WGS84)
+
+biketrips_a <- biketrips %>% 
+  filter(cluster_start == "A" & within == TRUE)
+```
+
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 1: Overview map of the Metro Bike Share stations in Los Angeles and the research area of this project (blue)."}
+## Create overview map
+pal <- colorFactor(c("navy", "red", "yellow", "orange"), domain = c("A", "B", "C", "D"))
+content <- paste("Cluster: ", bike_start_sf$cluster_start)
+
+overview_map <- leaflet(bike_start_sf) %>% 
+  addProviderTiles(providers$CartoDB.Positron, options = providerTileOptions(opacity = 0.6)) %>%
+  addRectangles(
+      lng1=min(biketrips_a$start_lon)-0.02, lat1=min(biketrips_a$start_lat)-0.02,
+      lng2=max(biketrips_a$start_lon)+0.02, lat2=max(biketrips_a$start_lat)+0.02,
+      fillColor = "transparent", popup = "Research Area: Cluster A") %>%
+  addCircleMarkers(color = ~pal(cluster_start), radius = 1, popup = content)
+
+overview_map
+```
+
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE}
+# number of trips in each cluster
+ntrips_cluster <- biketrips %>% 
+  group_by(cluster_start) %>% 
+  summarize(count=n())
+
+# get number of stations in cluster A
+get_no_of_stations <- function(df){
+  station1 <- df$start_station
+  station2 <- df$end_station
+  station1 <- as.vector(station1)
+  station2 <- as.vector(station2)
+  stations <- c(station1, station2)
+  station <- unique(stations) # remove duplicates
+  return(length(station))
+}
+station_dataset <- get_no_of_stations(biketrips)
+station_a <- get_no_of_stations(biketrips_a)
+
+overview_df <- data.frame("Level" = c("Overall", "Cluster A", "Rounded Proportion [%]"), 
+              "Number_of_trips" = c(sum(ntrips_cluster$count), nrow(biketrips_a), round(nrow(biketrips_a)/sum(ntrips_cluster$count)*100)),
+              "Number_of_stations" = c(station_dataset, station_a, round(station_a/station_dataset*100)))
+overview_df
+```
+Table 1: A summary of the data set
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 2: Plot of the distances and the durations of bike trips in cluster A (without return trips) to get a better understanding of the data."}
+# attempt to predict distance out of duration for round trips (because they have no distance) -> failed
+bike_plot <- biketrips_a %>% 
+  filter(distance > 0.001)
+
+linearMod <- lm(distance ~ duration, data=bike_plot)
+#summary(linearMod) # adj. rsquared 1.73% -> very low
+
+scatter.smooth(x=bike_plot$distance, xlab="Trip Distance [km]", y=bike_plot$duration, ylab="Trip Duration [min]", main=" ")
+```
+
+
+## Methods  
+We would like to note that all methods could be applied to the other clusters and other similar data sets of other cities as well. They were designed to address the different aspects of our chosen research questions. 
+
+### Most "Popular" Stations   
+Many studies of bike-sharing systems classify bike stations based on users’ mobility patterns. This is of particular interest because the imbalances of the distribution of bicycles in terms of available bikes per station is a common issue in bike-sharing systems. To provide a sufficient number of bikes at each station is a difficult task since movements of customers are highly dynamic and the redistribution of bikes is rather expensive (Vogel et al., 2011). O′Neill and Caulfield (2012) distinguish three different types of bike stations depending on the pickup and return activity during the daily course. They categorise go-from stations, go-to stations and self-sustainable stations.  
+
+This method explores the number of trips per hour between all bike stations and is able to identify the key go-from and go-to stations. By grouping the bike trips based on the start and end location and on the hour of the trip, we have determined "popular" stations within the system. Furthermore, we have analyzed the differences of numbers of trips between these "popular" stations. 
+
+Additionally, we used the "cumulative trip ratio" introduced by Chabchoub and Fricker (2014) and applied by Jimenez et al. (2016). This ratio is the difference between trips departing from and trips arriving at a station, normalized by the capacity of the station. The result should lie between -1 and +1, whereas 0 would represent a balanced station (Jimenez et al., 2016). We found capacities for four stations on Metro Bike Hub (2020). While out of these stations, two were outside our cluster A and one could not be clearly located to a bike station we were left with one value for Union Station (192 bikes). Nevertheless we looked at the other values and used these values for smaller stations (64  and 25 bikes). We assigned capacities of 192, 64 and 25 bikes to stations depending on their turnover or "busyness" (sum of trips starting and ending at this station).
+
+
+### Metro Station Analysis   
+Having analysed the imbalances of the distribution of bicycles, another interesting topic emerges when inspecting the spatial patterns of bike-sharing trips. Generally, residential areas are where bike-sharing demands often generate, whilst rail stations are attractive hubs where bike-sharing trips end at (Zhao et al., 2015).
+
+To analyse the connection of metro stations and bike stations/trips, we have conducted a metro station analysis. We have calculated a convex hull of the bike stations and intersected it with the metro station point data set. This way, we can show, which metro stations lie within the area of the bike stations and in our area of interest (cluster A). In order to retrieve the distance between each bike station and the closest metro station, the nncross method from the “spatstat” package was used. This analysis gives an idea about the shortest distance between each bike stations and the closest metro station in Los Angeles. Next, we have created buffers around the mentioned metro stations to see how many bike stations lie within them. For these buffers we used a width of 300 metres, a realistic value for bike stations that are supposed to actually serve a specific metro station (considering that metro stations might have different exits that are quite far from each other). Furthermore, we have calculated the ratio of trips that start from these bike stations to all bike trips within the cluster. This indicates the share of trips that might have the purpose of combining different transportation modes. In the end, we have created a map to show the stations within the convex hull, the bike station within and outside of the metro station buffers and the number of trips that start at the bike stations close to a metro station.
+
+
+### Temporal Analysis  
+In order to build up our own analysis, we have divided the data set into trips that took place on a day of the weekend or on any other day of the week. Through averaging the results by the number of trips on each day-type (weekday-day or weekend-day) it was possible to compare their properties.  
+
+Furthermore, we have calculated the hourly departures for each day of the week to detect peaks throughout the day and disparities between the different days. We expected to detect and identify days of the week which are busier and have a higher number of trips than others. We have not found any literature that has looked at the distribution of average number of trips for each day of the week. Most of the studies separate the week by weekday and weekend such as Zhou (2015) or and Zhao et al. (2015). Romanillos et al. (2018) additionally separates Friday and public holidays from weekend and weekday in order to look at their temporal patterns. This way, they found that Friday shows a shifted peak in the afternoon activity because people working in specific sectors tend to finish work earlier on Fridays.
+
+
+### Trip Pattern Analysis  
+Kou & Cai (2018) state that bike-sharing systems are mainly used for commuting and touristy purposes and that these two types of trips have very different patterns. We have used some of their inputs and came up with our own method to differentiate between commuter trips and tourist trips. 
+
+In order to differentiate between these two types, factors such as "passholder type", "trip velocity" and "travel time" were used. Furthermore, we identified trips where people seemed to be moving together. Additionally, whether a trip was a “return trip” or “one way” also helped us defining commuters and tourists. Because commuters are meant to use the bikes from home to work or a public transport station and back in two trips. Which and what values we used to retrieve the purpose of a trip is described in the discussion section. This entire approach was also inspired by a paper about semantic trajectories - trajectories that are analysed not only based on the raw movement data but using additional information from the application context (Parent et al., 2013).  
+
+In order to detect whether people moved together during their bike trips, we wrote a function. Because our trips are ordered in start time, the function looks at each trip and compares its attributes with the next 100 trips starting after the initial trip. Firstly, both trips need to have the same start and end station. Secondly, we check whether the trips started and ended at a similar time (within 2 minutes). If all requirements were met the initial trip and the corresponding trip were labeled as moving together. 
+
+
+# Results  
+## Most "Popular" Stations  
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE}
+# some simple data exploration to get an idea what we're working with
+biketrips_a_meanduration <- mean(biketrips_a$duration)
+biketrips_a_meandistance <- mean(biketrips_a$distance)
+biketrips_a_oneway <- biketrips_a %>% 
+  filter(trip_route_category != "Round Trip")
+
+biketrips_a_meandistance <- mean(biketrips_a_oneway$distance)
+biketrips_a_passholderdist <- biketrips_a %>% 
+  group_by(passholder_type) %>% 
+  summarize(count=n())
+
+# calculate balance for each station
+hourly_start <- biketrips_a %>% 
+  group_by(start_station, start_hour) %>% 
+  summarize(count=n())
+
+colnames(hourly_start) <- c("Station_ID", "Hour", "Count_Start")
+hourly_end <- biketrips_a %>% 
+  group_by(end_station, end_hour) %>% 
+  summarize(count=n())
+
+colnames(hourly_end) <- c("Station_ID", "Hour", "Count_End")
+hourly <- hourly_start %>% 
+  full_join(hourly_end, copy = FALSE, by= c("Station_ID", "Hour"))
+
+hourly[is.na(hourly)] <- 0
+hourly$diff <- hourly$Count_Start-hourly$Count_End
+hourly <- hourly %>% 
+  inner_join(station_dic, copy = FALSE, by = "Station_ID")
+```
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap= "Figure 3: Balance of trips starting (positive) and ending (negative) at all stations."}
+## a lot of trips between Union station and Main/1st St (location of Los Angeles Department of Transportation)
+ggplot(data = hourly, mapping = aes(x = Hour,
+                                       y = Station_Name,
+                                       fill = diff)) +
+                                       geom_tile() +
+                                       xlab(label = "Hour") +
+                                       ylab(label = "Start Station") +
+                                       scale_fill_gradient2("Difference")
+```
+
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap= "Figure 4: Balance of trips starting (positive) and ending (negative) at Union Station West Portal and Main & 1st."}
+# extract the two most "popular" stations
+twostations <- hourly %>% 
+  filter(Station_ID %in% c(3030, 3014))
+
+total_trips_2stations <- biketrips_a %>% 
+  filter(start_station %in% c(3030, 3014) | end_station %in% c(3030, 3014)) %>% 
+  nrow()
+
+total_between_2stations <- biketrips_a %>% 
+  filter(start_station == 3030 & end_station == 3014 | start_station == 3014 & end_station == 3030) %>% 
+  nrow()
+
+ratio_2stations <- total_between_2stations / total_trips_2stations
+# Only 27% of all trips starting or ending at either 3014 or 3030 are used for trips between the two stations
+
+ggplot(data = twostations, mapping = aes(x = Hour,
+                                          y = Station_Name,
+                                        fill = diff)) +
+                                       geom_tile() +
+                                       xlab(label = "Hour") +
+                                       ylab(label = "Start Station") +
+                                       scale_fill_gradient2("Difference")
+```
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap= "Figure 5: Map of cumulative trip ratio showing the difference between trips arriving and trips departing from a station. The blue dots show stations where many bike trips end, the red dots represent stations many people start their trip from. The popup reveals the ratio."}
+bike_test <- biketrips_a[c(1:5000), c(5:10)]
+for (i in nrow(bike_test)){
+  if (as.numeric(bike_test[i,1]>as.numeric(bike_test[i,4]))){
+    temp <- bike_test[i,c(1:3)]
+    bike_test[i,c(1:3)] <- bike_test[i,c(4:6)]
+    bike_test[i,c(4:6)] <- temp
+  }
+}
+bike_test <- bike_test %>% filter(as.numeric(bike_test$start_station) != as.numeric(bike_test$end_station)) %>% group_by(start_station, start_lat, start_lon, end_station, end_lat, end_lon) %>% summarize(count = n())
+bike1 <- bike_start_sf %>% filter(cluster_start == "A", cluster_end == "A")
+m <- leaflet(bike1) %>% 
+  addProviderTiles(providers$CartoDB.Positron, options = providerTileOptions(opacity = 0.6)) %>%
+  addCircleMarkers(color = "green", radius = 2)
+
+for(i in 1:nrow(bike_test)){
+  m <- addPolylines(m, lat = as.numeric(bike_test[i,c(2,5)]), lng = as.numeric(bike_test[i,c(3,6)]), col = "blue", weight = bike_test$count, opacity = 0.2)
+}
+m
+```
+
+
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap= "Figure 5: Map of cumulative trip ratio showing the difference between trips arriving and trips departing from a station. The blue dots show stations where many bike trips end, the red dots represent stations many people start their trip from. The popup reveals the ratio."}
+# Cumulative Trip Ratio Analysis
+cumulative_trip_ratio <- hourly %>% 
+  group_by(Station_ID, Station_Name) %>% 
+  summarize(sum(diff), abs(sum(Count_Start, Count_End)))
+
+colnames(cumulative_trip_ratio)[3:4] <- c('Difference', 'Total Turnover')
+cumulative_trip_ratio <- cumulative_trip_ratio %>% 
+  mutate(capacity = ifelse(`Total Turnover` > 1500, 192, ifelse(`Total Turnover` > 500, 64, 25))) # assign capacities to different stations, depending on their turnover
+
+cumulative_trip_ratio <- cumulative_trip_ratio %>% 
+  mutate(ratio = round(Difference/capacity,2))
+
+colnames(cumulative_trip_ratio)[1] <- "start_station" # rename column to make join possible
+unique_station_coord <- biketrips_a %>% 
+  group_by(start_station, start_lat, start_lon) %>% 
+  summarize(count = n())
+
+trip_ratio_sf <- cumulative_trip_ratio %>% 
+  full_join(unique_station_coord, copy = FALSE, by = "start_station")
+
+trip_ratio_sf <- st_as_sf(trip_ratio_sf, coords = c("start_lon", "start_lat"))
+trip_ratio_sf <- trip_ratio_sf %>% 
+  mutate(category = ifelse(ratio > 0.33, "pos", ifelse(ratio < -0.33, "neg", "balanced")))
+
+leaflet(trip_ratio_sf) %>% 
+  addProviderTiles(providers$CartoDB.Positron, options = providerTileOptions(opacity = 0.6)) %>% 
+  setView(lat=34.06699, lng=-118.2909,zoom=12)%>%
+  addCircleMarkers(data = trip_ratio_sf, col = ifelse(trip_ratio_sf$category == "pos", "blue", ifelse(trip_ratio_sf$category == "neg", "red", "grey")), fillOpacity = 0.5, radius = sqrt(abs(trip_ratio_sf$ratio))*7, stroke = FALSE, popup = paste("Ratio: ", trip_ratio_sf$ratio))
+```
+
+
+## Metro Station Analysis  
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 6: Map of bike stations and metro stations and the convex hull (red)."}
+a_sf <- st_as_sf(biketrips_a, coords = c("start_lon", "start_lat"), crs = WGS84)
+a_sp <- as(a_sf, "Spatial")
+a_sp <- spTransform(a_sp, CRS(WGS84))
+a_sf_nad <- st_transform(a_sf, crs = NAD83)
+a_sp_nad <- as(a_sf_nad, "Spatial")
+a_coords <- st_coordinates(a_sf)
+
+# Convex Hull to clip to relevant stations
+a_hull <- gConvexHull(a_sp_nad) # use NAD object for buffer because it is a metric system and buffer-value can be defined as a metric value
+a_hull <- gBuffer(a_hull, width =300)
+a_hull <- st_as_sf(a_hull)
+a_hull <- st_transform(a_hull, crs = WGS84)
+
+all_stations_within_a_hull <- st_intersection(a_hull, all_stations)
+
+leaflet() %>% 
+  addProviderTiles(providers$CartoDB.Positron, options = providerTileOptions(opacity = 0.6)) %>% 
+  setView(lat=34.06699, lng=-118.2909,zoom=11)%>%
+  addPolygons(data = a_hull, color = "darkred") %>%
+  addCircleMarkers(data = a_sf, col = "darkblue4", radius = 1) %>%
+  addCircleMarkers(data = all_stations, col = "black", radius = 2, popup=all_stations$STATION)
+```
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 7: Histogram and density of the shortest distances from bike stations to the next metro station."}
+# calculate shortest distance from stations to metro stations
+a_stations <- biketrips_a[6:7] %>% 
+  unique()
+
+a_stations <- a_stations %>%
+  st_as_sf(coords = c("start_lon", "start_lat"), crs = WGS84) %>%
+  st_transform(crs = NAD83) %>%
+  as("Spatial")
+
+dist_stations_bikemetro<- nncross(X=maptools::as.ppp.SpatialPointsDataFrame(a_stations), Y=as.ppp.SpatialPointsDataFrame(all_stations_sp), k=1)
+
+hist(dist_stations_bikemetro$dist, col = "grey", breaks = 20, prob = TRUE, main="", xlab="Distance [m]")
+lines(density(dist_stations_bikemetro$dist), lwd = 2, add = T)
+```
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 8: Map of bike stations that lie within the metro station buffers. The circles that can be activated (Number of Trips from Stations in Metro buffers) represent the absolute number of bike trips starting at these bike stations."}
+# create buffer around metro stations. First transform to sp to use buffer function
+all_stations_nad <- st_transform(all_stations, crs = NAD83)
+all_stations_sp <- as(all_stations_nad, "Spatial")
+all_stations_coords <- st_coordinates(all_stations)
+all_stations_buffer <- buffer(all_stations_sp, width=300)
+all_stations_buffer <- st_as_sf(all_stations_buffer)
+all_stations_buffer <- st_transform(all_stations_buffer, crs = WGS84)
+
+all_bike_trips_within_metro_buffer <- st_intersection(all_stations_buffer, a_sf)
+trips_in_buffer_count_start <- all_bike_trips_within_metro_buffer %>% 
+  group_by(start_station) %>% 
+  summarize(count=n())
+
+popup_start <- paste("Station Name: ", trips_in_buffer_count_start$start_station, "count: ", trips_in_buffer_count_start$count)
+all_bike_stations_within_metro_buffer <- st_intersection(all_stations_buffer, trips_in_buffer_count_start)
+
+leaflet() %>% 
+  addProviderTiles(providers$CartoDB.Positron, options = providerTileOptions(opacity = 0.6)) %>% 
+  setView(lat=34.06699, lng=-118.2909,zoom=12)%>%
+  addPolygons(data = all_stations_buffer, color = "darkred") %>%
+  addPolygons(data = a_hull, color = "darkred") %>%
+  addCircleMarkers(data = a_sf, col = "darkblue4", radius = 0.7, fillOpacity=0.6, group="Bike Stations in Convex Hull")%>%
+  addCircleMarkers(data = all_bike_stations_within_metro_buffer, col = "black", radius = 1, popup = all_bike_stations_within_metro_buffer$STATION, group = "Bike Stations in Metro buffer") %>%
+  addCircleMarkers(data = trips_in_buffer_count_start, col = "black", popup = popup_start, radius=sqrt(trips_in_buffer_count_start$count), opacity=0.4, group = "Number of Trips from Stations in Metro buffers")%>%
+  addLayersControl(overlayGroups=c("Bike Stations in Convex Hull", "Bike Stations in Metro buffer", "Number of Trips from Stations in Metro buffers"), options=layersControlOptions(collapsed=FALSE))%>%
+  hideGroup("Number of Trips from Stations in Metro buffers")
+
+# ratio of trips that start within metro buffer and trips in cluster A
+ratio_metrocluster <- nrow(all_bike_trips_within_metro_buffer) / nrow(a_sf)
+```
+
+## Temporal Analysis   
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE}
+# Create overview for each day
+biketrips_a$weekday <- weekdays(as.Date(biketrips_a$start_day)+1) # the weekday is only correct with +1
+weekday_count <- biketrips_a %>% 
+  group_by(start_hour, weekday) %>%
+  summarize(count=n())
+
+dayLabs<-c("Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag") 
+weekday_count$weekday <- factor(weekday_count$weekday, levels = rev(dayLabs))
+weekday_count <-weekday_count[order(weekday_count$weekday), ]
+
+weekday_count <- biketrips_a %>% 
+  group_by(weekday) %>% 
+  summarize(count=n())
+
+weekday_count$weekday <- factor(weekday_count$weekday, levels = dayLabs)
+weekday_count <-weekday_count[order(weekday_count$weekday), ]
+weekday_count$mean_trips <- round(weekday_count$count/14,2) # 14 weeks are included in data set
+weekday_count$mean_trips[1] <- round(weekday_count$count[1]/15,2) # monday is included 15 times (14 weeks + 1 day)
+weekday_count$percentage <- round(weekday_count$count/sum(weekday_count$count),3)*100
+weekday_count
+```
+Table 2: Summary of trips for each day of the weak
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 9: The average number of trips per day type (weekday-day vs. weekend-day)."}
+weekday_count_new <- biketrips_a %>% 
+  group_by(start_hour, weekday %in% dayLabs[1:5]) %>% 
+  summarize(count=n())
+
+names(weekday_count_new)[2] <- "type"
+weekday_count_new <- weekday_count_new %>% mutate(type = ifelse(type == TRUE, "WeekDAY", "WeekEND"))
+weekend <- weekday_count_new %>% 
+  filter(type == "WeekEND") %>% 
+  mutate(count = count/2/13) #normalize per day
+
+weekday <- weekday_count_new %>% 
+  filter(type == "WeekDAY") %>% 
+  mutate(count = count/5/13) #normalize per day
+
+plot(x=weekday$start_hour, y=weekday$count, type = "b", pch = 19, col = "blue", xlab = "Start Hour", ylab = "Number of trips", main ="")
+lines(weekend$start_hour, y=weekend$count, type = "b", pch = 19, col = "green", add = T)
+legend("topleft", legend=c("Weekday-Day", "Weekend-Day"),col=c("blue", "green"), lty = 1, cex=0.8)
+```
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 10: The average number of trips on each day of the week."}
+# function to retrieve the statistics for a specific day
+# number is the number of mondays (e.g.) in the data set. Monday appears 14 times, the rest 13 times
+day_hour <- function(dataset = biketrips_a, day, number){ 
+  day_stat <- dataset %>% 
+    filter(weekday == day) %>% 
+    group_by(start_hour) %>% 
+    summarize(count = n()) %>% 
+    mutate(count = count/number)
+  return (day_stat) 
+}
+monday <-day_hour(day = "Montag", number = 14)
+tuesday <- day_hour(day = "Dienstag", number = 13)
+wednesday <- day_hour(day = "Mittwoch", number = 13)
+thursday <- day_hour(day = "Donnerstag", number = 13)
+friday <- day_hour(day = "Freitag", number = 13)
+saturday <- day_hour(day = "Samstag", number = 13)
+sunday <- day_hour(day = "Sonntag", number = 13)
+
+# plot(day)
+plot(monday$start_hour, monday$count, type = "o", col = "blue", ylim = c(0,90), main = " ", xlab = "Hour", ylab = "Count")
+lines(tuesday$start_hour, tuesday$count, type = "o", col = "red")
+lines(wednesday$start_hour, wednesday$count, type = "o", col = "chartreuse4")
+lines(thursday$start_hour, thursday$count, type = "o", col = "blueviolet")
+lines(friday$start_hour, friday$count, type = "o", col = "darkorange")
+lines(saturday$start_hour, saturday$count, type = "o", col = "gray")
+lines(sunday$start_hour, sunday$count, type = "o", col = "black")
+legend("topleft", legend=c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),col=c("blue", "red", "chartreuse4", "blueviolet", "darkorange", "gray", "black"), lty = 1, cex= 0.8)
+```
+
+## Trip Pattern Analysis  
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 11: An analysis of electric and standard bikes in terms of different movement parameters."}
+# electric vs. standard bike analysis
+electric <- biketrips_a %>% 
+  filter(bike_type == "electric")
+
+standard <- biketrips_a %>%
+  filter(bike_type == "standard")
+
+par(mfrow=c(1,3))
+biketrips_a$bike_type <- factor(biketrips_a$bike_type)
+boxplot(biketrips_a$duration ~ biketrips_a$bike_type, col="grey", main = "Duration", xlab = "Bike Type", ylab = "Duration [min]", outline = FALSE)
+boxplot(biketrips_a$velocity ~ biketrips_a$bike_type, col="grey", main = "Velocity", xlab = "Bike Type", ylab = "Velocity [km/h]")
+boxplot(biketrips_a$distance ~ biketrips_a$bike_type, col="grey", main = "Distance", xlab = "Bike Type", ylab = "Distance [km]")
+par(mfrow=c(1,1))
+```
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE}
+# extract whether multiple people are moving together (start and end at the same time at the same station)
+biketrips_a$together <- FALSE
+
+time_diff_ok <- function(trip_a, trip_b){
+  diff_starttime <- biketrips_a$start_time[trip_a]-biketrips_a$start_time[trip_b]
+  diff_endtime <- abs(biketrips_a$end_time[trip_a]-biketrips_a$end_time[trip_b]) # absolute value because end_time is not sorted
+  if (diff_starttime < 3 & diff_endtime < 3){
+    return("TRUE")
+  }
+  else {
+    return("FALSE")
+  }
+}
+
+for (trip in 1:nrow(biketrips_a)){ # iterate through data set
+  for (minus in 1:100){ # iterate through the next 100 trips
+    if (trip-minus > 0){
+      if (biketrips_a$start_station[trip] == biketrips_a$start_station[trip-minus] & biketrips_a$end_station[trip] == biketrips_a$end_station[trip-minus]){
+      if (time_diff_ok(trip, trip-minus) == "TRUE"){ # assign TRUE to both trips, if time_diff_ok returned TRUE
+        biketrips_a$together[trip] <- TRUE
+        biketrips_a$together[trip-minus] <- TRUE
+      }
+    }
+  }
+  } 
+}
+
+tog <- biketrips_a %>% 
+  filter(together == TRUE) %>% 
+  nrow()
+
+ratio <- tog / nrow(biketrips_a) # ratio of trips made together
+
+# model purpose of trips (commuter or tourist)
+biketrips_a <- biketrips_a %>% 
+  mutate(purpose = ifelse(velocity > mean(biketrips_a$velocity) | passholder_type %in% c("Monthly Pass", "Annual Pass", "Flex Pass") & together == FALSE & duration < 15 & trip_route_category == "One Way", "commuter", "tourist"))
+
+purpose_proportion_df <- biketrips_a %>% 
+  group_by(purpose) %>% 
+  summarize('Proportion [%]' = round(n()*100/nrow(biketrips_a),2))
+
+purpose_proportion_df
+```
+Table 3: Proportions of the two trip purposes
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 12: The average number of trips by commuters and tourists over the course of a day."}
+time_purpose <- biketrips_a %>% 
+  group_by(purpose, start_hour) %>% 
+  summarize(count = n()/92)
+
+commuter <- time_purpose %>% 
+  filter(purpose == "commuter")
+
+tourist <- time_purpose %>% 
+  filter(purpose == "tourist")
+
+plot(commuter$start_hour, commuter$count, type = "b", col = "blue", xlab = "Hour", ylab = "Number of trips", main = " ")
+lines(tourist$start_hour, tourist$count, type = "b", col = "red")
+legend("topleft", legend=c("Commuter", "Tourist"),col=c("blue", "red"), lty = 1, cex=0.8)
+```
+
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE}
+commuter <- biketrips_a %>% 
+  filter(purpose == "commuter")
+
+tourist <- biketrips_a %>% 
+  filter(purpose == "tourist")
+
+commuter_meanduration <- mean(commuter$duration)
+commuter_meandistance <- mean(commuter$distance)
+tourist_meanduration <- mean(tourist$duration)
+tourist_meandistance <- mean(tourist$distance)
+
+# prepare data for plot
+# weekday-weekend
+tourist_com <- tourist %>% 
+  group_by(start_hour, weekday %in% dayLabs[1:5]) %>% 
+  summarize(count=n())
+
+names(tourist_com)[2] <- "type"
+tourist_com <- tourist_com %>% 
+  mutate(type = ifelse(type == TRUE, "WeekDAY", "WeekEND"))
+
+tou_end <- tourist_com %>% 
+  filter(type == "WeekEND") %>% 
+  mutate(count = count/2/13) #normalize per day
+
+tou_day <- tourist_com %>% 
+  filter(type == "WeekDAY") %>% 
+  mutate(count = count/5/13) #normalize per day
+
+commuter_com <- commuter %>% 
+  group_by(start_hour, weekday %in% dayLabs[1:5]) %>% 
+  summarize(count=n())
+
+names(commuter_com)[2] <- "type"
+commuter_com <- commuter_com %>% 
+  mutate(type = ifelse(type == TRUE, "WeekDAY", "WeekEND"))
+
+com_end <- commuter_com %>% 
+  filter(type == "WeekEND") %>%
+  mutate(count = count/2/13) #normalize per day
+
+com_day <- commuter_com %>% 
+  filter(type == "WeekDAY") %>% 
+  mutate(count = count/5/13) #normalize per day
+
+# assign weekday information to each day for plot
+monday <-day_hour(dataset = tourist, day = "Montag", number = 14)
+tuesday <- day_hour(dataset = tourist, day = "Dienstag", number = 13)
+wednesday <- day_hour(dataset = tourist, day = "Mittwoch", number = 13)
+thursday <- day_hour(dataset = tourist, day = "Donnerstag", number = 13)
+friday <- day_hour(dataset = tourist, day = "Freitag", number = 13)
+saturday <- day_hour(dataset = tourist, day = "Samstag", number = 13)
+sunday <- day_hour(dataset = tourist, day = "Sonntag", number = 13)
+
+Monday <-day_hour(dataset = commuter, day = "Montag", number = 14)
+Tuesday <- day_hour(dataset = commuter, day = "Dienstag", number = 13)
+Wednesday <- day_hour(dataset = commuter, day = "Mittwoch", number = 13)
+Thursday <- day_hour(dataset = commuter, day = "Donnerstag", number = 13)
+Friday <- day_hour(dataset = commuter, day = "Freitag", number = 13)
+Saturday <- day_hour(dataset = commuter, day = "Samstag", number = 13)
+Sunday <- day_hour(dataset = commuter, day = "Sonntag", number = 13)
+```
+
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 13: The average number of trips over the course of a day, comparing commuters and tourists."}
+par(mfrow=c(1,2))
+plot(x=com_day$start_hour, y=com_day$count, type = "b", pch = 19, col = "blue", xlab = "Start Hour", ylab = "Count", main ="Commuter")
+lines(com_end$start_hour, y=com_end$count, type = "b", pch = 19, col = "green", add = T)
+legend("bottomright", legend=c("Weekday-Day", "Weekend-Day"),col=c("blue", "green"), lty = 1, cex=0.8)
+
+plot(x=tou_end$start_hour, y=tou_end$count, type = "b", pch = 19, col = "green", xlab = "Start Hour", ylab = "Count", main ="Tourist")
+lines(tou_day$start_hour, y=tou_day$count, type = "b", pch = 19, col = "blue", add = T)
+legend("bottomright", legend=c("Weekday-Day", "Weekend-Day"),col=c("blue", "green"), lty = 1, cex=0.8)
+par(mfrow=c(1,1))
+```
+
+
+```{r message=FALSE, warning=FALSE, eval = TRUE, echo = TRUE, fig.cap="Figure 14: The average number of trips per day of the week the course of a day, comparing commuters and tourists."}
+par(mfrow=c(1,2))
+plot(Monday$start_hour, Monday$count, type = "o", col = "blue", ylim = c(0,90), main = "Commuter", xlab = "Hour", ylab = "Count")
+lines(Tuesday$start_hour, Tuesday$count, type = "o", col = "red")
+lines(Wednesday$start_hour, Wednesday$count, type = "o", col = "chartreuse4")
+lines(Thursday$start_hour, Thursday$count, type = "o", col = "blueviolet")
+lines(Friday$start_hour, Friday$count, type = "o", col = "darkorange")
+lines(Saturday$start_hour, Saturday$count, type = "o", col = "gray")
+lines(Sunday$start_hour, Sunday$count, type = "o", col = "black")
+legend("topleft", legend=c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),col=c("blue", "red", "chartreuse4", "blueviolet", "darkorange", "gray", "black"), lty = 1, cex= 0.8)
+
+plot(monday$start_hour, monday$count, type = "o", col = "blue", ylim = c(0,90), main = "Tourist", xlab = "Hour", ylab = "Count")
+lines(tuesday$start_hour, tuesday$count, type = "o", col = "red")
+lines(wednesday$start_hour, wednesday$count, type = "o", col = "chartreuse4")
+lines(thursday$start_hour, thursday$count, type = "o", col = "blueviolet")
+lines(friday$start_hour, friday$count, type = "o", col = "darkorange")
+lines(saturday$start_hour, saturday$count, type = "o", col = "gray")
+lines(sunday$start_hour, sunday$count, type = "o", col = "black")
+legend("topleft", legend=c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),col=c("blue", "red", "chartreuse4", "blueviolet", "darkorange", "gray", "black"), lty = 1, cex= 0.8)
+par(mfrow=c(1,1))
+```
+
+
+# Discussion  
+Firstly, we discuss the results of the exploratory data analysis. To break down the data set and limit ourselves to cluster A was a pretty straightforward decision and does not need any further explanation (see Table 1 for proportions of trips and stations in cluster A when compared to the whole data set). It simply allowed us to focus on a compact set of bike stations to conduct our methods on. After getting to know the data set better and calculating some simple exploratory data values we implemented the different methods in RStudio. 
+
+One big limitation has to be mentioned right away: the data set only provides start and end locations (origin and destination data). There is no information available about the more detailed movement behaviour of the trip other than these two fixes. This is, of course, a strong oversimplification of the actual trajectories. Since all derived movement parameters, such as speed, turning angle or sinuosity are strongly influenced by the chosen sampling rate (Laube & Purves, 2018), the detail of analysis is limited due to the given granularity. The trip distance and the trip velocity that we have calculated in the pre-processing stage can not be precise since the paths are unknown and we did not use a street network to estimate the actual distances more accurately as described by Kou & Cai (2018). Therefore, the distance values can only be seen as a rough and rather unprecise approximation of the true values. 
+
+Consequently and due to our method to calculate the distance, “round trips” in our data set have a distance value of 0 meters. In order to predict distance values based on trip duration, we have attempted to create a linear model, which can be seen in the code of Figure 2. However, the linear regression model had an adjusted r squared value of 1.75%, which is definitely not a good fit because this amount of variability is explained by the model. That a linear regression is probably not the best approach can be seen in Figure 2. Due to limited knowledge about models, we could not find a model to predict the missing distance values based on trip duration.
+
+The applied methods allowed interesting insights to the bike-sharing system in Los Angeles. All methods could be advanced and developed further. However, they give starting points and ideas for further research with the used data set. The methods could all be used for any data sets of a similar structure.
+
+## Most "Popular" Stations 
+With the first method, we wanted to find "popular" stations and determine, where imbalances of the distribution of bicycles within the system might occur. We were able to detect the two most important stations as shown in Figure 4. The two stations clearly revealed themselves when analysing the trips per hour and per station in Figure 3. Both stations (Union station and 1st/Main station) lie in the very center of the city. Union station also is the main train station of the city and a node where several metro lines meet. The analysis shows a big variability of usage of these two stations throughout the day. It turns out that the Los Angeles Department of Transportation and the California Department of Transportation are very close to the bike station on 1st/Main station. It might be the case that employees working for these departments show higher motivation using the bike-sharing system or have discounts. These are stations that would presumably be characterized as go-from and go-to stations by O’Neill and Caulfield (2012) since their balance varies significantly over the course of the day. Similar, more elaborate approaches could be used to better understand the system structure and provide data for more effective planning of redistribution of bicycles between the different stations.
+
+Figure 5 reveals the results of the "cumulative trip ratio". Blue are stations where the ratio is positive and larger than 0.33. Hence, at these stations more trips start from than end. Red are stations with a negative ratio and smaller than -0.33. Grey are the balanced stations with ratios between 0.33 and -0.33. As can be seen in Figure 5, our classification does not reveal distinctive spatial patterns based on the ratio. In the city centre and the neighbouring districts stations with a negative ratio as well as a positive ratio can be found. The stations in the Jefferson area form the only small cluster that shows a majority of negative ratios. Because the assigned capacity values are not appropriate for each station, values exceed the range of -1 to +1 proposed by Jimenez et al. (2016). Since the assignment of the capacities was rather arbitrary and only based on the total number of trips starting and ending at a station, this method is not optimal, but can still be used to get an overview of the situation. In research more elaborate methods have been applied to solve the problem of optimizing a bike-sharing system such as origin-destination (OD) matrices in Oliveira et al. (2016) or Come et al. (2014). Another approach which might reveal better results, could also be to look at the behaviour of these ratios depending on the time of the day or the weekday.
+
+## Metro Station Analysis
+Metro Bike Share is a program that emerged from a partnership between the metro company and the City of Los Angeles. Therefore, we think that a metro station analysis is an important approach when discussing spatial patterns. In Figure 6 we have illustrated the bike stations, the metro stations and the convex hull. Twenty-five metro stations came to lie within the convex hull which was generated based on the bike stations of cluster A. As Figure 7 shows, distances between bike stations and metro stations peak between 300 and 500 metres. Figure 8 shows the twenty-six bike stations (out of 103 overall in cluster A) that lie within the buffers that we created with a width of 300m around the metro stations. Our calculations show that 30% of the trips start at these stations and Figure 8 demonstrates nicely, at which stations the most trips start from. 
+
+Of course, not all bike trips starting at said twenty-six bike stations were actually used as part of a multi-modal trip chain because many facilities of interest, work places, and activities are often situated close to metro stations as well. However, the share of trips starting from bike stations within the metro buffers is high which shows the importance of these bike stations. Considering the distances in Figure 7 again, using s bigger buffer distance would probably not have been useful here. Many more bike stations in the center would have come to lie within the metro buffers and results would therefore have been less meaningful. We would like to note that the same method could be used for trips ending close to metro stations as well. Furthermore, the analysis shows that some metro stations do not have a bike station close by (see Figure 8). This was a surprising finding, since we expected to detect at least one bike station within each metro station buffer. It also brings up questions about the degree to which the system was actually planned to promote multi-modal transportation. The calculated 30% of trips from our analysis is somewhat comparable to the results of Zhao et al. (2015). However, another analysis for trips ending close to metro stations would have been interesting as well since the study of Zhao et al. (2015) shows even higher ratios for trips ending at rail stations.
+
+## Temporal Analysis
+As Figure 9 shows, there are different aspects to be mentioned regarding the temporal patterns of bike trips. It is apparent that there are distinctive differences between an average weekend day and an average weekday day. As can be seen in Table 2, the average number of trips is significantly smaller on the weekend. Los Angeles is part of a developed country and hence shows its characteristics that on weekends people are not commuting to work, which underlines Zhou’s (2015) findings in a study similar study in Chicago, USA and contrasts Zhao et al. (2015) investigation about bike-sharing activities in Nanjing, China where more people are using bike-sharing during the weekends because more people tend to work during the weekend.
+
+Zhao et al. (2015)  also found out that roughly 65% of all journeys on weekdays take place between 6-9am and 4-7pm. Vogel et al. (2011) have also detected these peaks. Similarly, Beecham and Wood (2014) found that the weekday journeys in London in these time spans account for 75% of all journeys with weekends only accounting for 2%. We have not calculated the exact proportion, but Figure 9 shows similar results. The weekday line in our data shows one additional distinctive peak around noon (besides the morning and afternoon peaks), which has not been brought up in the mentioned literature. The average number of trips on weekends still lies at around 600 and only starts to decrease sharply after 7pm which is a different pattern than the one found by Beecham and Wood (2014). 
+
+The temporal distribution of the number of trips starting each day is shown in Figure 10. Again, the three peaks can be clearly detected and at least the first and last peak can be associated to people commuting to and from work (Zhao, 2015; Vogel et al., 2011). The middle peak can be explained by people and using a bike over lunch break. By having a closer look at the first and last peak it is obvious that Tuesday and Wednesday have the highest number of trips compared to the rest of the days. This could be explained by the fact that Tuesday and Wednesday are the most popular days to work since especially part time workers decide to take Monday and / or Friday off and maybe even Thursday. Coming back to Romanillos et al. (2018) findings that friday shows a little peak before the usual maximum of trips at around 5pm we can conclude that this little peak is also visible in Figure 10 at 3pm, even though it is not as clear as in Romanillos et al. paper. Especially, since the peak on Friday at 5pm is still more dominant than on 3pm unlike in Romanillos et al. results. Furthermore, Vogel et al. (2011) have observed a night peak between 12pm and 2am when working with bike-sharing data from Vienna. This characteristics cannot be observed in our data. 
+
+## Trip Pattern Analysis
+With the trip pattern analysis we were able to categorise two travel purposes: tourists and commuters. All trips whose velocity was above the mean velocity of all trips or the passholder types was either Monthly Pass, Annual Pass or Flex Pass and the trip did not move together with another trip and the duration was less than 15 minutes and the trip was a “one way” trip were labeled as commuter. All others were defined as tourist trips. Kou & Cai (2018) state that tourists tend to return the bike in areas near to their origin and therefore have a shorter trip distance but a bigger trip duration. As mentioned before, we included that behaviour in our analysis and assumed that commuters only use bicycles one way. Furthermore, we included the “moving together behaviour”. The ratio of people moving together based on our analysis is 21% - a value that might be roughly too high in our understanding. However, it was an interesting challenge to determine how many trips cover the same route (same origin and destination) at around the same time (2 minutes difference at most) in a simple yet very straightforward and robust way. One might think that we should have differentiated between trips taken by an electric bike and trips by a standard bike (smart bikes are just not used in cluster A). But as Figure 11 reveals, the different numeric attributes are very similar. The standard bike even shows a higher mean velocity. Consequently, we did not include the bike type in our analysis. It must also be mentioned that trips labeled as tourist trips do not necessarily have to be taken by tourists. This behaviour also includes local people’s bike trips for fun on a decent velocity.  
+
+The factors that were used for the analysis are all comprehensible and reproducible, yet other people might choose different values and criteria. However, the method allowed us to think about different spatial patterns that commuters and tourists might travel in and therefore was interesting to work with. Using our method, 36% of trips were made by tourists and 64% by commuters (see Table 3). A closer look into the calculated tourist and commuter data reveals that our results show similarities to the study of  Kou & Cai (2018). They also worked with Metro Bike Share data of Los Angeles and calculated an average trip distance of 1.02 miles (=1.63km) and an average trip duration of 4.57 minutes for commuters. We have calculated an average trip distance of 1.4 km and an average trip duration of 8.7 for commuters. For tourists, Kou & Cai (2018) have calculated an average travel distance of 0.94 miles (=1.5km) and an average duration of 23.62 minutes. Here, our values differ quite a bit with 0.8 km and 41.4 minutes. It is little surprising that their trip distances are higher than ours since they have used a street network to calculate their distances instead of the euclidean distance based on coordinates of the bike stations. However, we first were quite surprised about our high average duration value. Because in our tourist classification, travel time played quite an important role (more than 15 minutes as a hard criterion), the mean duration is likely to be higher than with the criteria Kou & Cai (2018) have applied. Their categories were based on mathematical calculations of distance and duration values, which is a completely different approach.
+
+By having a look at characteristics of the lines in Figure 12, we can see that the commuter trips are heavily influencing the weekday trips in Figure 9 including the three peaks. Our modelled tourist trips start later in the morning since tourists or people who are up to an easy bike ride do not tend to go on trips between 6 and 7 am. In fact, the number of trips rose over the course of a day and showed slightly levelled peaks at around noon and in the late afternoon. Maybe the peak during the late afternoon corresponds to people returning home or back to their hotel after a day in the city. At night, the values are very similar. 
+
+Figure 13 and Figure 14 reveal some interesting traits. According to Figure 13 commuter trips show a completely different behaviour on the weekend than during the week. This is surprising, since in comparison tourist trips follow more or less the same pattern throughout the week. This might be because tourists do not necessarily distinguish between weekday or weekend since they are off or on holiday. Additionally to the different distribution of trips for commuters, the number of trips is also reduced on weekends and approach the numbers of tourist trips, where trips on the weekend show slightly higher numbers. An explanation for this could be that on Saturday and Sunday more local people, who might represent commuter trips during the week, represent tourist behaviour on the weekends.
+
+
+# Sources  
+
+## Data
+* Metro Bike Share (2019). Data. https://bikeshare.metro.net/about/data/ (accessed 21.03.20).  
+
+* Metro Bus and Rail GIS Data. Developer (2020). https://developer.metro.net/docs/gis-data/overview/ (accessed 28.03.20).  
+
+* Metro Bike Hub (2020). https://bikehub.com/metro/ (accessed 29.03.20).  
+
+## Literature
+
+Beecham and Wood (2014) Roger Beecham, R., Wood, J. (2014). Exploring gendered cycling behaviours within a large-scale behavioural data-set, Transportation Planning and Technology, 37:1, 83-97.
+
+Caulfield, B., O’Mahony, M., Brazil, W., Weldon, P. (2017). Examining usage patterns of a bike-sharing scheme in a medium sized city, Transportation Research Part A: Policy and Practice
+Volume 100, June 2017, Pages 152-161.  
+
+Chabchoub, Y., & Fricker, C. (2014). Classification of the vélib stations using Kmeans, Dynamic Time Wraping and DBA averaging method. 2014 International Workshop on Computational Intelligence for Multimedia Understanding, IWCIM 2014, 1–5. 
+
+Côme, E., Randriamanamihaga, A. N., Oukhellou, L., & Aknin, P. (2014). Spatio-temporal Analysis of Dynamic Origin-Destination Data using Latent Dirichlet Allocation: Application to the Vélib ’ Bike Sharing System of Paris. Transportation Research Board 93rd Annual Meeting, 19.
+
+Deloitte MCS Limited (2018). Deloitte City Mobility Index, Los Angeles
+https://www2.deloitte.com/content/dam/insights/us/articles/4331_Deloitte-City-Mobility-Index/LosAngeles_GlobalCityMobility_WEB.pdf (accessed April 16th, 2020).  
+
+Jiménez, P., Nogal, M., Caulfield, B., & Pilla, F. (2016). Perceptually important points of mobility patterns to characterise bike sharing systems: The Dublin case. Journal of Transport Geography, 54, 228–239. 
+
+Kou, Z, Cai, H. (2018). Understanding bike sharing travel patterns: An analysis of trip data from eight cities, Physica A: Statistical Mechanics and its Applications, Volume 515, Pages 785-797.  
+
+Laube, P., Purves, R. (2011). How fast is a cow? Cross-scale Analysis of Movement Data, Transaction in GIS. 15(3), Pages 401-418.  
+
+Oliveira, G. N., Sotomayor, J. L., Torchelsen, R. P., Silva, C. T., & Comba, J. L. D. (2016). Visual analysis of bike-sharing systems. Computers and Graphics (Pergamon), 60, 119–129.
+
+O′Neill, P., Caulfield, B. (2012). Examining user behaviour on a shared bike scheme: the case of Dublin Bikes. 13th International Conference on Travel Behaviour Research.  
+
+Parent, C., Spaccapietra, S., Renso, C., Andrienko, G., Andrienko, N., Bogorny, V., et al.. (2013). Semantic trajectories modeling and analysis. ACM Computing Surveys (CSUR), 45(4), 42.  
+
+Romanillos, G., Moya-Gómez, B., Zaltz-Austwick, M., & Lamíquiz-Daudén, P. J. (2018). The pulse of the cycling city: visualising Madrid bike share system GPS routes and cycling flow. Journal of Maps, 14(1), 34–43.  
+
+Vogel, P., Greiser, T., Mattfeld, D.C. (2011). Understanding bike-sharing systems using data
+mining: exploring activity patterns. Procedia Social Behavioral Sciences 20, 514–523.  
+
+Zhao, J. Wang, J., Deng, W. (2015). Exploring bikesharing travel time and trip chain by gender and day of the week Transportation Research Part C, 58 (2015), Pages 251-264.  
+
+Zhou, X. (2015). Understanding spatiotemporal patterns of biking behavior by analyzing massive bike sharing data in Chicago. PLoS ONE, 10(10), 1–20. 

@@ -1,0 +1,32 @@
+"0","biketrips <- read.csv(""bike-trips-LA-q3.csv"", sep = "","")
+
+
+# get rid of trips without coordinates and columns we don't need
+biketrips <- biketrips[!is.na(biketrips$start_lat),]
+biketrips <- biketrips[!is.na(biketrips$end_lat),]
+
+# assign character for each cluster depending on coordinates
+biketrips <- biketrips %>% mutate(cluster_start = ifelse(start_lat > 34.1364, ""B"", ifelse(start_lat < 33.8945, ""C"", ifelse(start_lon > -118.35, ""A"", ""D""))))
+biketrips <- biketrips %>% mutate(cluster_end = ifelse(end_lat > 34.1364, ""B"", ifelse(end_lat < 33.8945, ""C"", ifelse(end_lon > -118.35, ""A"", ""D""))))
+
+## are start and end region the same? yes, only for 3 trips they are different -> focus on cluster a
+biketrips <- biketrips %>% mutate(within = ifelse(cluster_start == cluster_end, TRUE, FALSE))
+
+biketrips <- biketrips %>% 
+  mutate(start_time=as.POSIXct(start_time, format=""%m/%d/%Y %H:%M"")) %>%
+  mutate(start_hour = as.POSIXlt(start_time)$hour) %>%
+  mutate(start_day=floor_date(start_time, unit=""day"")) %>% 
+  mutate(start_month=floor_date(start_time, unit=""month"")) %>% 
+  mutate(end_time=as.POSIXct(end_time, format=""%m/%d/%Y %H:%M"")) %>%
+  mutate(end_hour = as.POSIXlt(end_time)$hour) %>%
+  mutate(end_day=floor_date(end_time, unit=""day"")) %>% 
+  mutate(end_month=floor_date(end_time, unit=""month"")) %>%
+  mutate(start_station = as.character(start_station))
+
+pal <- colorFactor(c(""navy"", ""red"", ""yellow"", ""orange""), domain = c(""A"", ""B"", ""C"", ""D""))
+content <- paste(""Cluster: "", bike_start_sf$cluster_start)
+leaflet(bike_start_sf) %>% addProviderTiles(providers$CartoDB.Positron, options = providerTileOptions(opacity = 0.6)) %>%
+  addCircleMarkers(color = ~pal(cluster_start), radius = 1, popup = content)
+"
+"2","Some values were outside the color scale and will be treated as NA"
+"2","Some values were outside the color scale and will be treated as NA"

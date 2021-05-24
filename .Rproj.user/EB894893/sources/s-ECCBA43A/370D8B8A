@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1588265826023.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "370D8B8A",
+    "lastKnownWriteTime" : 1588277478,
+    "last_content_update" : 1588277484150,
+    "path" : "~/Project/Project_GEO880.Rmd",
+    "project_path" : "Project_GEO880.Rmd",
+    "properties" : {
+        "cursorPosition" : "335,0",
+        "scrollLine" : "332",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

@@ -1,0 +1,3 @@
+"0","# plot(day)"
+"0","par(mfrow=c(1,2))"
+"0","plot(x=com_day$start_hour, y=com_day$count, type = ""b"", pch = 19, col = ""blue"", xlab = ""Start Hour"", ylab = ""Count"", main =""Commuter"")"

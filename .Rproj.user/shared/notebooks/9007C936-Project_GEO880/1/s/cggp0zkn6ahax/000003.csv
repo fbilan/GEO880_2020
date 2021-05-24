@@ -1,0 +1,20 @@
+"0","
+# create buffer around metro stations. First transform to sp to use buffer function
+all_stations_nad <- st_transform(all_stations, crs = NAD83)
+all_stations_sp <- as(all_stations_nad, ""Spatial"")
+all_stations_coords <- st_coordinates(all_stations)
+all_stations_buffer <- buffer(all_stations_sp, width=300)
+all_stations_buffer <- st_as_sf(all_stations_buffer)
+all_stations_buffer <- st_transform(all_stations_buffer, crs = WGS84)
+
+all_bike_stations_within_metro_buffer <- st_intersection(all_stations_buffer, a_sf)
+cat(length(all_bike_stations_within_metro_buffer), ""bike stations lie within the buffers"") #how to get this value?
+"
+"1","25"
+"1"," "
+"1","bike stations lie within the buffers"
+"0","leaflet() %>% "
+"0","  addProviderTiles(providers$CartoDB.Positron, options = providerTileOptions(opacity = 0.6)) %>% "
+"0","  addPolygons(data = all_stations_buffer) %>%"
+"0","  addCircleMarkers(data = a_sf, col = ""red"", radius = 0.5, fillOpacity=0.6)%>%"
+"0","  addCircleMarkers(data = all_bike_stations_within_metro_buffer, col = ""black"", radius = 1) "

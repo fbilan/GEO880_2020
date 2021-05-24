@@ -1,0 +1,3 @@
+"0",""
+"0","# ratio of trips that start within metro buffer and trips in cluster A"
+"0","ratio_metrocluster <- nrow(all_bike_trips_within_metro_buffer) / nrow(a_sf)"

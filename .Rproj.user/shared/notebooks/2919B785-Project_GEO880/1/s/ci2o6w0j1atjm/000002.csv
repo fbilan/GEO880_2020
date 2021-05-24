@@ -1,0 +1,7 @@
+"0","# electric vs. standard analysis"
+"0","electric <- biketrips_a %>% filter(bike_type == ""electric"")"
+"0","standard <- biketrips_a %>% filter(bike_type == ""standard"")"
+"0",""
+"0","par(mfrow=c(1,3))"
+"0","biketrips_a$bike_type <- factor(biketrips_a$bike_type)"
+"0","boxplot(biketrips_a$duration ~ biketrips_a$bike_type, col=""grey"", main = ""Duration"", xlab = ""Bike Type"", ylab = ""Duration [min]"", outline = FALSE)"

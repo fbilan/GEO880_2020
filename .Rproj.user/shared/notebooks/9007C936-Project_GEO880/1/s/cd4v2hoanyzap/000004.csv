@@ -1,0 +1,8 @@
+"0","# attempt to predict distance out of duration for round trips (because they have no distance) -> failed"
+"0","bike_plot <- biketrips_a %>% "
+"0","  filter(distance > 0.001)"
+"0",""
+"0","linearMod <- lm(distance ~ duration, data=bike_plot)"
+"0","#summary(linearMod) # adj. rsquared 1.73% -> very low"
+"0",""
+"0","scatter.smooth(x=bike_plot$distance, xlab=""Trip Distance [km]"", y=bike_plot$duration, ylab=""Trip Duration [min]"", main="" "")"

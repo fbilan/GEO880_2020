@@ -1,0 +1,8 @@
+"0",""
+"0","ggplot(data = hourly_west_town, mapping = aes(x = start_hour,"
+"0","                                          y = End.Community.Area.Name,"
+"0","                                        fill = n)) +"
+"0","                                       geom_tile() +"
+"0","                                       xlab(label = ""Hour"") +"
+"0","                                       ylab(label = ""Date"") +"
+"0","                                       ggtitle(""Rides from West Town to other communitites (except the popular ones)"")"

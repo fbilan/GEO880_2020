@@ -1,0 +1,11 @@
+"0",""
+"0","# calculate shortest distance from stations to metro stations"
+"0","a_stations <- biketrips_a[6:7] %>% unique()"
+"0","a_stations <- a_stations %>%"
+"0","  st_as_sf(coords = c(""start_lon"", ""start_lat""), crs = WGS84) %>%"
+"0","  st_transform(crs = NAD83) %>%"
+"0","  as(""Spatial"")"
+"0","dist_stations_bikemetro<- nncross(X=maptools::as.ppp.SpatialPointsDataFrame(a_stations), Y=as.ppp.SpatialPointsDataFrame(all_stations_sp), k=1)"
+"2","Error in as.ppp.SpatialPointsDataFrame(all_stations_sp) : 
+  Only projected coordinates may be converted to spatstat class objects
+"

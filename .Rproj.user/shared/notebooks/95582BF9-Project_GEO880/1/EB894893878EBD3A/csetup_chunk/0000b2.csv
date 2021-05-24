@@ -1,0 +1,4 @@
+"0",""
+"0","ggplot(data = scootertrips, aes(speed)) +"
+"0","  geom_histogram() +"
+"0","  xlab(""Speed [km/h]"")"

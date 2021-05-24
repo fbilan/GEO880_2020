@@ -1,0 +1,19 @@
+"0","knitr::opts_chunk$set(echo = TRUE)"
+"0",""
+"0","library(lubridate)"
+"0","library(lwgeom)"
+"2","Linking to liblwgeom 2.5.0dev r16016, GEOS 3.6.1, PROJ 4.9.3
+"
+"0","library(tidyverse)"
+"0","library(osmdata)"
+"2","Data (c) OpenStreetMap contributors, ODbL 1.0. http://www.openstreetmap.org/copyright
+"
+"0","library(sf)"
+"0","library(ggmap)"
+"2","Paket ‘ggmap’ wurde unter R Version 3.6.2 erstellt"
+"2","Google's Terms of Service: https://cloud.google.com/maps-platform/terms/.
+"
+"2","Please cite ggmap if you use it! See citation(""ggmap"") for details.
+"
+"0","library(dplyr)"
+"0",""

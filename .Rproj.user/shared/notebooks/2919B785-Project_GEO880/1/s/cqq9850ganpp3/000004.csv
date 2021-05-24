@@ -1,0 +1,1 @@
+"0","lines(tourist$start_hour, tourist$count, type = ""b"", col = ""red"")"

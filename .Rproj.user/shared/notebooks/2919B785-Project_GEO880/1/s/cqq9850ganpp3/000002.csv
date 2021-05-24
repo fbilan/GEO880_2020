@@ -1,0 +1,4 @@
+"0","time_purpose <- biketrips_a %>% group_by(purpose, start_hour) %>% summarize(count = n())"
+"0","commuter <- time_purpose %>% filter(purpose == ""commuter"")"
+"0","tourist <- time_purpose %>% filter(purpose == ""tourist"")"
+"0","plot(commuter$start_hour, commuter$count, type = ""b"", col = ""blue"", xlab = ""Hour"", ylab = ""Number of trips"", main = "" "")"

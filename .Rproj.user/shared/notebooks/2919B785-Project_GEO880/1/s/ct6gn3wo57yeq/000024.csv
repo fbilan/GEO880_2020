@@ -1,0 +1,2 @@
+"0","par(mfrow=c(1,2))"
+"0","plot(Monday$start_hour, Monday$count, type = ""o"", col = ""blue"", ylim = c(0,90), main = ""Commuter"", xlab = ""Hour"", ylab = ""Count"")"

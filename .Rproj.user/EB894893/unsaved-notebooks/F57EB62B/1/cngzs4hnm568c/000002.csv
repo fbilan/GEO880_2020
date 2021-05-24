@@ -1,0 +1,3 @@
+"0","# majority of trips is in cluster A"
+"0","ntrips_cluster <- biketrips %>% group_by(cluster_start) %>% summarize(count=n())"
+"0","print(ntrips_cluster)"

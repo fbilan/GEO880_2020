@@ -1,0 +1,6 @@
+"0","# Read data"
+"0","cbike <- read.csv(file=""201903-citibike-tripdata.csv"", stringsAsFactors=F, "
+"0","                  sep="","", na.strings=c(""NA"",""NaN"", ""NULL""))"
+"2","cannot open file '201903-citibike-tripdata.csv': No such file or directory"
+"2","Error in file(file, ""rt"") : cannot open the connection
+"
